@@ -14,3 +14,12 @@ class UserFiles(db.Model):
     file_path = db.Column(db.String, nullable=False)
     date = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+    def serialize(self):
+        return {
+            'id':self.id,
+            'user_id':self.user_id,
+            'file_name':self.file_name,
+            'file_path':self.file_path,
+            'date':self.date
+        }
+

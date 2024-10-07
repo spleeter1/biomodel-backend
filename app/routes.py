@@ -17,6 +17,8 @@ def user_directory(model_name,username):
         os.makedirs(data_dir)
     return data_dir
 
+
+# REGISTER_ROUTES
 def register_routes(app):
     @app.route('/',methods=['POST'])
     def home():
@@ -73,7 +75,6 @@ def register_routes(app):
             return jsonify({'message': 'Registration failed', 'error': str(e)}), 500
         
     @app.route('/storeSkinCancer/',methods=['POST'])
-
     def storeSkinCancer():
         model_name = 'SkinCancer'
 
@@ -106,3 +107,33 @@ def register_routes(app):
             return jsonify({"message": f'{str(e)}'})
 
         return jsonify({"":'Successfully'})
+    
+    @app.route('/historyFiles/',methods=['POST'])
+    def historyFiles():
+        user_id = get_user_id_by_username('biomodel')
+        files_list = UserFiles.query.filter_by(user_id=user_id).all()
+        return jsonify([file.serialize() for file in files_list])
+    
+    @app.route('/deleteFileResult/',methods=['POST'])
+    def delFileResult():
+        user_id = get_user_id_by_username('biomodel')
+        data = request
+        del_id = data.form.get('id')
+
+        file = UserFiles.query.filter_by(id = del_id).first()
+        if file:
+            try:
+                if os.path.exists(file.file_path):
+                    os.remove(file.file_path)  
+                    print(file.file_path)
+
+                db.session.delete(file)
+                db.session.commit()
+
+                return jsonify({"message": "File deleted successfully"})
+            except Exception as e:
+                return jsonify({"error": str(e)})
+        else:
+            return jsonify({"message": "File not found"})
+
+
