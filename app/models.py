@@ -11,7 +11,7 @@ class UserFiles(db.Model):
     id = db.Column(db.Integer,primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     file_name = db.Column(db.String, nullable=False)
-    file_path = db.Column(db.String, nullable=False)
+    file_path =db .Column(db.String, nullable=False)
     date = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     def serialize(self):

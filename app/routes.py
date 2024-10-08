@@ -16,7 +16,49 @@ def user_directory(model_name,username):
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
     return data_dir
+def store_files(model_name, file_key, username_key):
+    data = request
+    username = data.form.get(username_key)
 
+    files = data.files.getlist(file_key)  
+    if not files:
+        file = data.files.get(file_key)  
+        if file:
+            files = [file]  
+
+    if not username or not files:
+        return jsonify({"message": "Username or files are missing"}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    user_dir = user_directory(model_name=model_name, username=username)
+    
+    saved_files = []
+    for file in files:
+        file_path = os.path.join(user_dir, file.filename)
+
+        try:
+            file.save(file_path)
+        except Exception as e:
+            return jsonify({"message": f"Error saving file {file.filename}: {str(e)}"}), 500
+
+        existing_file = UserFiles.query.filter_by(file_name=file.filename, file_path=file_path).first()
+        if existing_file:
+            return jsonify({"message": f"File {file.filename} already exists."}), 409
+
+        user_file = UserFiles(user_id=user.id, file_name=file.filename, file_path=file_path)
+        saved_files.append(user_file)
+
+    try:
+        db.session.add_all(saved_files)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Database error: {str(e)}"}), 500
+
+    return jsonify({"message": "Successfully uploaded files"}), 200
 
 # REGISTER_ROUTES
 def register_routes(app):
@@ -74,46 +116,30 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'message': 'Registration failed', 'error': str(e)}), 500
         
-    @app.route('/storeSkinCancer/',methods=['POST'])
+    ### StoreFiles in each model ###        
+    @app.route('/storeSkinCancer/', methods=['POST'])
     def storeSkinCancer():
-        model_name = 'SkinCancer'
+        return store_files(model_name='SkinCancer', file_key='image', username_key='user')
 
-        data = request
-        username = data.form.get('user')
-        picture =  data.files['image']
+    @app.route('/storePRSice2/', methods=['POST'])
+    def storePRSice2():
+        return store_files(model_name='PRSice2', file_key='fileResult', username_key='user')
 
-        user = User.query.filter_by(username=username).first() 
-        user_dir = user_directory(model_name=model_name,username=username)
-
-        file_path = os.path.join(user_dir,picture.filename)
-
-        try:
-            picture.save(file_path)
-        except Exception as e:
-            return jsonify({"message":f'{str(e)}'})
-        
-        existing_file = UserFiles.query.filter_by(file_name=picture.filename, file_path=file_path).first()
-
-        if existing_file:
-            return jsonify({"message": "File with the same name and path already exists."})
-
-        user_file = UserFiles(user_id=user.id,file_name=picture.filename,file_path=file_path)
-
-        try:
-            db.session.add(user_file)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"message": f'{str(e)}'})
-
-        return jsonify({"":'Successfully'})
+    @app.route('/storeGRUD/',methods=['POST'])
+    def storeGRUD():
+        return store_files(model_name='GRUD',file_key='fileResult',username_key='user')
     
+    @app.route('/storeVGPdiseases/',methods=['POST'])
+    def storeVGPdiseases():
+        return store_files(model_name='VGPdiseases',file_key='image',username_key='user')
+    ###      ###
+
     @app.route('/historyFiles/',methods=['POST'])
     def historyFiles():
         user_id = get_user_id_by_username('biomodel')
         files_list = UserFiles.query.filter_by(user_id=user_id).all()
         return jsonify([file.serialize() for file in files_list])
-    
+
     @app.route('/deleteFileResult/',methods=['POST'])
     def delFileResult():
         user_id = get_user_id_by_username('biomodel')
