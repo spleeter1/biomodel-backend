@@ -1,1 +1,6 @@
-env/
+# Bỏ qua môi trường ảo
+myenv/
+venv/
+
+# Bỏ qua thư mục __pycache__
+__pycache__/
