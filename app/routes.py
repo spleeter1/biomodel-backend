@@ -27,11 +27,11 @@ def store_files(model_name, file_key, username_key):
             files = [file]  
 
     if not username or not files:
-        return jsonify({"message": "Username or files are missing"}), 400
+        return jsonify({"message": "Username or files are missing"})
 
     user = User.query.filter_by(username=username).first()
     if not user:
-        return jsonify({"message": "User not found"}), 404
+        return jsonify({"message": "User not found"})
 
     user_dir = user_directory(model_name=model_name, username=username)
     
@@ -42,11 +42,11 @@ def store_files(model_name, file_key, username_key):
         try:
             file.save(file_path)
         except Exception as e:
-            return jsonify({"message": f"Error saving file {file.filename}: {str(e)}"}), 500
+            return jsonify({"message": f"Error saving file {file.filename}: {str(e)}"})
 
         existing_file = UserFiles.query.filter_by(file_name=file.filename, file_path=file_path).first()
         if existing_file:
-            return jsonify({"message": f"File {file.filename} already exists."}), 409
+            return jsonify({"message": f"File {file.filename} already exists."})
 
         user_file = UserFiles(user_id=user.id, file_name=file.filename, file_path=file_path)
         saved_files.append(user_file)
