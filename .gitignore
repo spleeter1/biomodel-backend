@@ -3,5 +3,4 @@ myenv/
 venv/
 
 # Bỏ qua thư mục __pycache__
-__pycache__/
-app/__pycache__/
+**/__pycache__/
